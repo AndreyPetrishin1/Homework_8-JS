@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculator</title>
+    <style>
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .grid__item {
+        display: flex;
+        border: 1px solid black;
+        padding: 10px;
+        justify-content: space-between;
+      }
+
+      .grid__txt {
+        width: 50%;
+      }
+
+      .grid__rate {
+        text-align: center;
+        width: 30%;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2 class="grid__header"></h2>
+    <div class="currency">
+      <select class="cc1"></select>
+      <input type="text" id="sum" />
+      <div id="result"></div>
+      <button id="toggleBtn">toggle</button>
+      
+    </div>
+    <div class="grid"></div>
+
+    <script>
+      const grid = document.querySelector(".grid");
+      const header = document.querySelector(".grid__header");
+      const select = document.querySelector(".cc1"),
+        inp = document.querySelector("#sum");
+      const toggleBtn = document.querySelector("#toggleBtn");
+      let currency1, currency2;
+      let data;
+      let result = document.getElementById("result");
+      fetch("https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json")
+        .then((response) => response.json())
+        .then((json) => (data = json));
+
+      setTimeout(function () {
+        data.forEach(function (elem) {
+          let opt = document.createElement("option");
+          opt.innerHTML = elem.cc;
+          select.appendChild(opt);
+          let html = `
+          <div class="grid__item">
+            <div class="grid__txt">${elem.txt}</div>
+            <div class="grid__rate">${elem.rate}</div>
+            <div class="grid__cc">${elem.cc}</div>
+            </div>`;
+          grid.insertAdjacentHTML("beforeend", html);
+        });
+        const select2 = select.cloneNode(true);
+        select2.id = "sel2";
+        inp.insertAdjacentElement("afterend", select2);
+        select2.addEventListener("change", selectSecondCurrency);
+        header.innerHTML = "Today: " + data[0].exchangedate;
+        toggleBtn.addEventListener("click", changeCurrency);
+        changeCurrency();
+
+      }, 800);
+
+      select.addEventListener("change", selectFirstCurrency);
+      inp.addEventListener("input", calcResult);
+      
+
+
+      function calcResult() {
+       
+        result.innerText = ((inp.value * currency1) / currency2).toFixed(2);
+    
+      }
+
+      function selectFirstCurrency() {
+        data.forEach(function (elem) {
+          if (select.value === elem.cc) {
+            currency1 = elem.rate;
+          }
+        });
+        calcResult();
+      }
+      function selectSecondCurrency() {
+        let select2 = document.getElementById("sel2");
+        data.forEach(function (elem) {
+          if (select2.value === elem.cc) {
+            currency2 = elem.rate;
+          }
+        });
+        calcResult();
+      }
+     
+
+      function changeCurrency() {
+        let select2 = document.getElementById("sel2");
+        let temp = select.value;
+        select.value = select2.value;
+        select2.value = temp;
+        selectFirstCurrency();
+        selectSecondCurrency();         
+        }
+     
+    </script>
+  </body>
+</html>
